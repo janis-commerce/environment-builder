@@ -2,4 +2,7 @@
 
 const { EnvironmentBuilder } = require('./lib');
 
-module.exports = EnvironmentBuilder;
+(async () => {
+	const envBuilder = new EnvironmentBuilder();
+	await envBuilder.execute();
+})();
