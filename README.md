@@ -18,6 +18,6 @@ npx @janiscommerce/environment-builder [ENVIRONMENT]
 
 ## Configuration
 
-The environments should be located in the folder `/root/environments/[ENVIRONMENT]`. It must'nt be empty.
+The environments should be located in the folder `/root/environments/[ENVIRONMENT]`. It mustn't be empty.
 
  

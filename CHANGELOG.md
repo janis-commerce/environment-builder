@@ -9,4 +9,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - `EnviromentBuilder` added
 - *Unit Test* added
-- Auto-Executable index added
+- `npx` added
