@@ -1,7 +1,7 @@
 # environment-builder
 
-[![Build Status](https://travis-ci.org/janis-commerce/environment-builder.svg?branch=JCN-94-environment-builder)](https://travis-ci.org/janis-commerce/environment-builder)
-[![Coverage Status](https://coveralls.io/repos/github/janis-commerce/environment-builder/badge.svg?branch=JCN-94-environment-builder)](https://coveralls.io/github/janis-commerce/environment-builder?branch=JCN-94-environment-builder)
+[![Build Status](https://travis-ci.org/janis-commerce/environment-builder.svg?branch=master)](https://travis-ci.org/janis-commerce/environment-builder)
+[![Coverage Status](https://coveralls.io/repos/github/janis-commerce/environment-builder/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/environment-builder?branch=master)
 
 Build the exclusive files of each environment in the right config folder.
 
@@ -20,4 +20,3 @@ npx @janiscommerce/environment-builder [ENVIRONMENT]
 
 The environments should be located in the folder `/root/environments/[ENVIRONMENT]`. It mustn't be empty.
 
- 
