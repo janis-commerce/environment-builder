@@ -122,7 +122,7 @@ describe('EnvironmentBuilder', () => {
 
 		});
 
-		it('should not create create config folderif \'root/environments\' is empty', async () => {
+		it('should not create create config folder if \'root/environments\' is empty', async () => {
 			MockFs({
 				environments: {} // empty folder
 			});
@@ -131,7 +131,7 @@ describe('EnvironmentBuilder', () => {
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 		});
 
-		it('should not create create config folderif \'root/environments/[ENVIRONMENT]\' not exist', async () => {
+		it('should not create create config folder if \'root/environments/[ENVIRONMENT]\' not exist', async () => {
 			MockFs({
 				environments: {
 					local: {
@@ -144,7 +144,7 @@ describe('EnvironmentBuilder', () => {
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 		});
 
-		it('should not create create config folderif \'root/environments/[ENVIRONMENT]\' is empty', async () => {
+		it('should not create create config folder if \'root/environments/[ENVIRONMENT]\' is empty', async () => {
 			MockFs({
 				environments: {
 					local: {} // empty folder
