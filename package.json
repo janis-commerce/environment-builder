@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/environment-builder",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Build the exclusive files of each environment in the right folder.",
   "main": "index.js",
   "scripts": {
