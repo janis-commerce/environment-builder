@@ -115,14 +115,14 @@ describe('EnvironmentBuilder', () => {
 			MockFs.restore();
 		});
 
-		it('should not create create config folder if \'root/environments\' not exist', async () => {
+		it('should not create config folder if \'root/environments\' not exist', async () => {
 
 			await envBuilder.execute();
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 
 		});
 
-		it('should not create create config folder if \'root/environments\' is empty', async () => {
+		it('should not create config folder if \'root/environments\' is empty', async () => {
 			MockFs({
 				environments: {} // empty folder
 			});
@@ -131,7 +131,7 @@ describe('EnvironmentBuilder', () => {
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 		});
 
-		it('should not create create config folder if \'root/environments/[ENVIRONMENT]\' not exist', async () => {
+		it('should not create config folder if \'root/environments/[ENVIRONMENT]\' not exist', async () => {
 			MockFs({
 				environments: {
 					local: {
@@ -144,7 +144,7 @@ describe('EnvironmentBuilder', () => {
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 		});
 
-		it('should not create create config folder if \'root/environments/[ENVIRONMENT]\' is empty', async () => {
+		it('should not create config folder if \'root/environments/[ENVIRONMENT]\' is empty', async () => {
 			MockFs({
 				environments: {
 					local: {} // empty folder
@@ -167,7 +167,7 @@ describe('EnvironmentBuilder', () => {
 			MockFs.restore();
 		});
 
-		it('should not replace create config folder if can\'t copy files', async () => {
+		it('should not replace config folder if can\'t copy files', async () => {
 			MockFs({
 				environments: MockFs.directory({
 					mode: 0o444,
@@ -188,7 +188,7 @@ describe('EnvironmentBuilder', () => {
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 		});
 
-		it('should create create config folder with \'local\' (no params passed) environment, only files', async () => {
+		it('should create config folder with \'local\' (no params passed) environment, only files', async () => {
 			MockFs({
 				environments: {
 					local: {
@@ -218,7 +218,7 @@ describe('EnvironmentBuilder', () => {
 
 		});
 
-		it('should create create config folder with [ENVIRONMENT] (params passed) environment, only files', async () => {
+		it('should create config folder with [ENVIRONMENT] (params passed) environment, only files', async () => {
 			MockFs({
 				environments: {
 					local: {
@@ -248,7 +248,7 @@ describe('EnvironmentBuilder', () => {
 
 		});
 
-		it('should create create config folder with \'local\' environment, files amd sub-folders', async () => {
+		it('should create config folder with \'local\' environment, files amd sub-folders', async () => {
 			MockFs({
 				environments: {
 					local: {
@@ -294,7 +294,7 @@ describe('EnvironmentBuilder', () => {
 
 		});
 
-		it('should create create config folder with [ENVIRONMENT] (params passed), files amd sub-folders', async () => {
+		it('should create config folder with [ENVIRONMENT] (params passed), files amd sub-folders', async () => {
 			MockFs({
 				environments: {
 					local: {
@@ -665,6 +665,73 @@ describe('EnvironmentBuilder', () => {
 			});
 		});
 
+	});
+
+	context('when process.env.MS_PATH is setted', () => {
+		let envBuilder;
+
+		beforeEach(() => {
+			envBuilder = new EnvironmentBuilder();
+
+			MockFs({
+				sac: {
+					environments: {
+						local: {
+							'LOCAL.md': '# LOCAL'
+						},
+						home: {
+							'HOME.md': '# HOME'
+						}
+					}
+				}
+			});
+		});
+
+		afterEach(() => {
+			MockFs.restore();
+		});
+
+		it('should build default environment', async () => {
+			process.env.MS_PATH = 'sac';
+
+			// Config doesn't exist before
+			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
+
+			await envBuilder.execute();
+
+			const localFile = path.join(EnvironmentBuilder.configDir, 'LOCAL.md');
+			const homeFile = path.join(EnvironmentBuilder.configDir, 'HOME.md');
+
+			// Config exists after and is not empty
+			assert(await envBuilder.exists(EnvironmentBuilder.configDir));
+			assert(!(await envBuilder.isEmptyFolder(EnvironmentBuilder.configDir)));
+
+			// Config has the right file
+			assert(await envBuilder.exists(localFile));
+			assert(!(await envBuilder.exists(homeFile)));
+
+		});
+
+		it('should build \'home\' environment', async () => {
+			process.env.MS_PATH = 'sac';
+
+			// Config doesn't exist before
+			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
+
+			await envBuilder.execute('home');
+
+			const localFile = path.join(EnvironmentBuilder.configDir, 'LOCAL.md');
+			const homeFile = path.join(EnvironmentBuilder.configDir, 'HOME.md');
+
+			// Config exists after and is not empty
+			assert(await envBuilder.exists(EnvironmentBuilder.configDir));
+			assert(!(await envBuilder.isEmptyFolder(EnvironmentBuilder.configDir)));
+
+			// Config has the right file
+			assert(!await envBuilder.exists(localFile));
+			assert(await envBuilder.exists(homeFile));
+
+		});
 	});
 
 });
