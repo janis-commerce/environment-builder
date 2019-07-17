@@ -12,18 +12,6 @@ const sandbox = require('sinon').createSandbox();
 
 const { EnvironmentBuilder } = require('./../lib');
 
-before(() => {
-	// Avoid showing messages in console during tests
-	sandbox.stub(console, 'log').callsFake(() => true);
-	sandbox.stub(console, 'error').callsFake(() => true);
-	sandbox.stub(process, 'exit');
-});
-
-after(() => {
-	sandbox.restore();
-});
-
-
 describe('Exists', () => {
 	let envBuilder;
 	let directory;
@@ -107,18 +95,29 @@ describe('EnvironmentBuilder', () => {
 	context('when some environments folders not exists or are empties', () => {
 
 		let envBuilder;
+		let exit;
 
 		beforeEach(() => {
+			// Avoid showing messages in console during tests
+			sandbox.stub(console, 'log').callsFake(() => true);
+			sandbox.stub(console, 'error').callsFake(() => true);
+			exit = sandbox.stub(process, 'exit');
+
 			envBuilder = new EnvironmentBuilder();
 		});
 
 		afterEach(() => {
 			MockFs.restore();
+			sandbox.restore();
 		});
 
 		it('should not create config folder if \'root/environments\' not exist', async () => {
 
 			await envBuilder.execute();
+
+			sandbox.assert.calledOnce(exit);
+			sandbox.assert.calledWith(exit, -1);
+
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 
 		});
@@ -129,7 +128,12 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			await envBuilder.execute();
+
+			sandbox.assert.calledOnce(exit);
+			sandbox.assert.calledWith(exit, -1);
+
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
+
 		});
 
 		it('should not create config folder if \'root/environments/[ENVIRONMENT]\' not exist', async () => {
@@ -142,7 +146,12 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			await envBuilder.execute('sac');
+
+			sandbox.assert.calledOnce(exit);
+			sandbox.assert.calledWith(exit, -1);
+
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
+
 		});
 
 		it('should not create config folder if \'root/environments/[ENVIRONMENT]\' is empty', async () => {
@@ -153,19 +162,31 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			await envBuilder.execute();
+
+			sandbox.assert.calledOnce(exit);
+			sandbox.assert.calledWith(exit, -1);
+
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
+
 		});
 	});
 
 	context('when environments folders exists, config folder not', () => {
 		let envBuilder;
+		let exit;
 
 		beforeEach(() => {
+			// Avoid showing messages in console during tests
+			sandbox.stub(console, 'log').callsFake(() => true);
+			sandbox.stub(console, 'error').callsFake(() => true);
+			exit = sandbox.stub(process, 'exit');
+
 			envBuilder = new EnvironmentBuilder();
 		});
 
 		afterEach(() => {
 			MockFs.restore();
+			sandbox.restore();
 		});
 
 		it('should not replace config folder if can\'t copy files', async () => {
@@ -184,6 +205,9 @@ describe('EnvironmentBuilder', () => {
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
 
 			await envBuilder.execute();
+
+			sandbox.assert.calledOnce(exit);
+			sandbox.assert.calledWith(exit, -1);
 
 			// Config doesn't exist after
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
@@ -347,11 +371,16 @@ describe('EnvironmentBuilder', () => {
 			let envBuilder;
 
 			beforeEach(() => {
+				// Avoid showing messages in console during tests
+				sandbox.stub(console, 'log').callsFake(() => true);
+				sandbox.stub(console, 'error').callsFake(() => true);
+
 				envBuilder = new EnvironmentBuilder();
 			});
 
 			afterEach(() => {
 				MockFs.restore();
+				sandbox.restore();
 			});
 
 			it('should replace config folder with \'local\' (no params passed) environment, only files', async () => {
@@ -517,13 +546,20 @@ describe('EnvironmentBuilder', () => {
 
 		describe('config folder is not empty', () => {
 			let envBuilder;
+			let exit;
 
 			beforeEach(() => {
+				// Avoid showing messages in console during tests
+				sandbox.stub(console, 'log').callsFake(() => true);
+				sandbox.stub(console, 'error').callsFake(() => true);
+				exit = sandbox.stub(process, 'exit');
+
 				envBuilder = new EnvironmentBuilder();
 			});
 
 			afterEach(() => {
 				MockFs.restore();
+				sandbox.restore();
 			});
 
 			it('should not replace config folder content if can\'t delete files in config', async () => {
@@ -559,6 +595,9 @@ describe('EnvironmentBuilder', () => {
 
 				// try to build 'local' environment
 				await envBuilder.execute();
+
+				sandbox.assert.calledOnce(exit);
+				sandbox.assert.calledWith(exit, -1);
 
 				// Config exists after and it's not empty
 				assert(await envBuilder.exists(EnvironmentBuilder.configDir));
@@ -672,6 +711,10 @@ describe('EnvironmentBuilder', () => {
 		let envBuilder;
 
 		beforeEach(() => {
+
+			sandbox.stub(console, 'log').callsFake(() => true);
+			sandbox.stub(console, 'error').callsFake(() => true);
+
 			envBuilder = new EnvironmentBuilder();
 
 			MockFs({
@@ -690,6 +733,7 @@ describe('EnvironmentBuilder', () => {
 
 		afterEach(() => {
 			MockFs.restore();
+			sandbox.restore();
 		});
 
 		it('should build default environment', async () => {
