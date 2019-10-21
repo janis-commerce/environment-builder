@@ -2,7 +2,7 @@
 
 'use strict';
 
-const { EnvironmentBuilder } = require('./lib');
+const EnvironmentBuilder = require('./lib/environment-builder');
 
 (async () => {
 	const envBuilder = new EnvironmentBuilder();

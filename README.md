@@ -5,7 +5,7 @@
 
 Build the exclusive files of each environment in the right config folder.
 
-## Usage
+## Usage (command line)
 
 In the console
 
@@ -20,3 +20,29 @@ npx @janiscommerce/environment-builder [ENVIRONMENT]
 
 The environments should be located in the folder `/root/environments/[ENVIRONMENT]`. It mustn't be empty.
 
+## Usage (module)
+
+```js
+const EnvironmentBuilder = require('@janiscommerce/environment-builder');
+```
+
+## API
+
+### **`new EnvironmentBuilder()`**
+Constructs the EnvironmentBuilder instance.
+
+### ***async*** **`execute(environment)`**
+Builds the environment for the specified `environment [String]`.
+
+## Examples
+```js
+const EnvironmentBuilder = require('@janiscommerce/environment-builder');
+
+const environmentBuilder = new EnvironmentBuilder();
+
+(async () => {
+
+	await environmentBuilder.execute('local');
+
+})();
+```

@@ -10,7 +10,7 @@ const chmod = util.promisify(fs.chmod);
 
 const sandbox = require('sinon').createSandbox();
 
-const { EnvironmentBuilder } = require('./../lib');
+const EnvironmentBuilder = require('./../lib/environment-builder');
 
 describe('Exists', () => {
 	let envBuilder;

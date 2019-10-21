@@ -2,7 +2,7 @@
   "name": "@janiscommerce/environment-builder",
   "version": "1.2.0",
   "description": "Build the exclusive files of each environment in the right folder.",
-  "main": "index.js",
+  "main": "lib/environment-builder.js",
   "bin": {
     "environment-builder": "index.js"
   },
