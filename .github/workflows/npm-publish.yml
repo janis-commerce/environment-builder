@@ -1,0 +1,15 @@
+name: NPM Publish
+
+on:
+  push:
+    tags:
+      - '**'
+
+jobs:
+  publish:
+    uses: janis-commerce/.github/.github/workflows/npm-publish.yml@master
+    with:
+      slack-username: Environment Builder
+    secrets:
+      npm_token: ${{ secrets.npm_token }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

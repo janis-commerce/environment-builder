@@ -1,6 +1,6 @@
 # environment-builder
 
-[![Build Status](https://travis-ci.org/janis-commerce/environment-builder.svg?branch=master)](https://travis-ci.org/janis-commerce/environment-builder)
+![Build Status](https://github.com/janis-commerce/environment-builder/workflows/Build%20Status/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/janis-commerce/environment-builder/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/environment-builder?branch=master)
 
 Build the exclusive files of each environment in the right config folder.
