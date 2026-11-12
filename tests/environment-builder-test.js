@@ -2,32 +2,67 @@
 
 const assert = require('assert');
 const path = require('path');
-const MockFs = require('mock-fs');
+const os = require('os');
 const fs = require('fs');
-const util = require('util');
-
-const chmod = util.promisify(fs.chmod);
 
 const sandbox = require('sinon').createSandbox();
 
-const EnvironmentBuilder = require('./../lib/environment-builder');
+const EnvironmentBuilder = require('../lib/environment-builder');
+
+const originalCwd = process.cwd();
+let tmpDir;
+
+/**
+ * Creates a file tree (nested objects = directories, strings = file contents) inside the temporary directory
+ * @param {object} tree
+ * @param {string} base
+ */
+const createTree = (tree, base = tmpDir) => {
+	Object.entries(tree).forEach(([name, content]) => {
+		const target = path.join(base, name);
+
+		if(typeof content === 'string')
+			return fs.writeFileSync(target, content);
+
+		fs.mkdirSync(target);
+		createTree(content, target);
+	});
+};
+
+const restorePermissions = dir => {
+	if(!fs.existsSync(dir))
+		return;
+
+	fs.chmodSync(dir, 0o755);
+	fs.readdirSync(dir, { withFileTypes: true })
+		.filter(entry => entry.isDirectory())
+		.forEach(entry => restorePermissions(path.join(dir, entry.name)));
+};
+
+beforeEach(() => {
+	tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'environment-builder-')));
+	process.chdir(tmpDir);
+});
+
+afterEach(() => {
+	delete process.env.MS_PATH;
+	process.chdir(originalCwd);
+	restorePermissions(tmpDir);
+	fs.rmSync(tmpDir, { recursive: true, force: true });
+});
 
 describe('Exists', () => {
 	let envBuilder;
 	let directory;
 
-	before(() => {
-		MockFs({
+	beforeEach(() => {
+		createTree({
 			local: {
 				'README.md': '# LOCAL'
 			}
 		});
 
 		envBuilder = new EnvironmentBuilder();
-	});
-
-	after(() => {
-		MockFs.restore();
 	});
 
 	it('should return TRUE when file path exist', async () => {
@@ -47,8 +82,8 @@ describe('Is Empty Folder', () => {
 	let envBuilder;
 	let directory;
 
-	before(() => {
-		MockFs({
+	beforeEach(() => {
+		createTree({
 			environments: {
 				local: {
 					'README.md': '# LOCAL'
@@ -58,10 +93,6 @@ describe('Is Empty Folder', () => {
 		});
 
 		envBuilder = new EnvironmentBuilder();
-	});
-
-	after(() => {
-		MockFs.restore();
 	});
 
 	it('should return TRUE when directory path exist and is empty', async () => {
@@ -85,7 +116,7 @@ describe('Is Empty Folder', () => {
 	it('should rejects when directory have bad permissions', async () => {
 		directory = path.join(process.cwd(), 'environments', 'local');
 
-		chmod(path.join(process.cwd(), 'environments'), 0o000);
+		fs.chmodSync(path.join(process.cwd(), 'environments'), 0o000);
 		await assert.rejects(envBuilder.isEmptyFolder(directory));
 	});
 });
@@ -107,7 +138,6 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		afterEach(() => {
-			MockFs.restore();
 			sandbox.restore();
 		});
 
@@ -123,7 +153,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should not create config folder if \'root/environments\' is empty', async () => {
-			MockFs({
+			createTree({
 				environments: {} // empty folder
 			});
 
@@ -137,7 +167,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should not create config folder if \'root/environments/[ENVIRONMENT]\' not exist', async () => {
-			MockFs({
+			createTree({
 				environments: {
 					local: {
 						'README.md': '# LOCAL'
@@ -155,7 +185,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should not create config folder if \'root/environments/[ENVIRONMENT]\' is empty', async () => {
-			MockFs({
+			createTree({
 				environments: {
 					local: {} // empty folder
 				}
@@ -185,21 +215,18 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		afterEach(() => {
-			MockFs.restore();
 			sandbox.restore();
 		});
 
 		it('should not replace config folder if can\'t copy files', async () => {
-			MockFs({
-				environments: MockFs.directory({
-					mode: 0o444,
-					items: {
-						local: {
-							'README.md': '# LOCAL'
-						}
+			createTree({
+				environments: {
+					local: {
+						'README.md': '# LOCAL'
 					}
-				})
+				}
 			});
+			fs.chmodSync(path.join(tmpDir, 'environments'), 0o444);
 
 			// Config doesn't exist before
 			assert(!(await envBuilder.exists(EnvironmentBuilder.configDir)));
@@ -214,7 +241,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should create config folder with \'local\' (no params passed) environment, only files', async () => {
-			MockFs({
+			createTree({
 				environments: {
 					local: {
 						'LOCAL.md': '# LOCAL'
@@ -244,7 +271,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should create config folder with [ENVIRONMENT] (params passed) environment, only files', async () => {
-			MockFs({
+			createTree({
 				environments: {
 					local: {
 						'LOCAL.md': '# LOCAL'
@@ -274,7 +301,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should create config folder with \'local\' environment, files amd sub-folders', async () => {
-			MockFs({
+			createTree({
 				environments: {
 					local: {
 						'LOCAL.md': '# LOCAL',
@@ -320,7 +347,7 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		it('should create config folder with [ENVIRONMENT] (params passed), files amd sub-folders', async () => {
-			MockFs({
+			createTree({
 				environments: {
 					local: {
 						'LOCAL.md': '# LOCAL',
@@ -379,12 +406,11 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			afterEach(() => {
-				MockFs.restore();
 				sandbox.restore();
 			});
 
 			it('should replace config folder with \'local\' (no params passed) environment, only files', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL'
@@ -416,7 +442,7 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			it('should replace config folder with [ENVIRONMENT] (params passed) environment, only files', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL'
@@ -448,7 +474,7 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			it('should replace config folder with \'local\' environment, files amd sub-folders', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL',
@@ -496,7 +522,7 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			it('should replace config folder with [ENVIRONMENT] (params passed), files amd sub-folders', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL',
@@ -558,12 +584,11 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			afterEach(() => {
-				MockFs.restore();
 				sandbox.restore();
 			});
 
 			it('should not replace config folder content if can\'t delete files in config', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL'
@@ -572,14 +597,12 @@ describe('EnvironmentBuilder', () => {
 							'HOME.md': '# HOME'
 						}
 					},
-					config: MockFs.directory({
-						mode: 0o555,
-						items: {
-							'DEV.md': '# DEV MODE',
-							keys: { 'KEY.txt': 'n03sUn4K3Y' }
-						}
-					})
+					config: {
+						'DEV.md': '# DEV MODE',
+						keys: { 'KEY.txt': 'n03sUn4K3Y' }
+					}
 				});
+				fs.chmodSync(path.join(tmpDir, 'config'), 0o555);
 
 				// Config exists before and it's not empty
 				assert(await envBuilder.exists(EnvironmentBuilder.configDir));
@@ -610,7 +633,7 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			it('should replace config folder content with \'local\' (no params passed) environment', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL'
@@ -658,7 +681,7 @@ describe('EnvironmentBuilder', () => {
 			});
 
 			it('should replace config folder content with [ENVIRONMENT] (params passed) environment', async () => {
-				MockFs({
+				createTree({
 					environments: {
 						local: {
 							'LOCAL.md': '# LOCAL'
@@ -717,7 +740,7 @@ describe('EnvironmentBuilder', () => {
 
 			envBuilder = new EnvironmentBuilder();
 
-			MockFs({
+			createTree({
 				sac: {
 					environments: {
 						local: {
@@ -732,7 +755,6 @@ describe('EnvironmentBuilder', () => {
 		});
 
 		afterEach(() => {
-			MockFs.restore();
 			sandbox.restore();
 		});
 
@@ -792,7 +814,7 @@ describe('index', () => {
 	});
 
 	it('should run the index script without problems', () => {
-		const index = require('./../index'); // eslint-disable-line
+		const index = require('../index'); // eslint-disable-line
 	});
 
 });
